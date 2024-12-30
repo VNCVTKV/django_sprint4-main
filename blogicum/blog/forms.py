@@ -3,6 +3,10 @@ from django import forms
 # Импортируем класс модели Birthday.
 from .models import Post, Comment
 
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 # Для использования формы с моделями меняем класс на forms.ModelForm.
 class PostForm(forms.ModelForm):
@@ -20,3 +24,9 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ('text',)
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'username', 'email',)

@@ -1,6 +1,6 @@
-from django.shortcuts import render, get_object_or_404
-from .models import Post, Category
-from .forms import PostForm
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Post, Category, Comment
+from .forms import PostForm, CommentForm, UserProfileForm
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.paginator import Paginator
@@ -46,9 +46,17 @@ def category_posts(request, category_slug):
 
 def post_detail(request, id):
     post = get_object_or_404(get_posts(), id=id)
+    form = CommentForm(request.POST or None)
+    queryset = Comment.objects.filter(post=id)
+    context = {'post': post, 'form': form, 'comments': queryset}
+    # Форму с переданным в неё объектом request.GET 
+    # записываем в словарь контекста...
+    if form.is_valid():
+        form.save()
+    # ...и отправляем в шаблон.
 
     return render(request,
-                  'blog/detail.html', {'post': post})
+                  'blog/detail.html', context)
 
 
 def create_post(request, pk=None):
@@ -93,5 +101,47 @@ def profile(request, username):
 
 
 def edit_profile(request):
+    user = get_object_or_404(User, pk=request.user.id)
 
-    return render(request, 'blog/profile.html')
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=user) # Передаем POST-данные, файлы и текущий объект
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data['username']
+            return redirect('blog:profile', username=username)  #  Указываем URL-маршрут куда нужно перенаправить после успешного сохранения
+    else:
+        form = UserProfileForm(instance=user)  
+
+    return render(request, 'blog/user.html', {'form': form})
+
+
+def add_comment(request, id, pk=None):
+    post = get_object_or_404(Post, id=id)
+    if pk is not None:
+        comment = get_object_or_404(Comment, id=pk)
+    else:
+        comment = None
+    form = CommentForm(request.POST or None, instance=comment)
+    context = {'form': form, 'post': post, 'comment': comment}
+    if form.is_valid():
+        comment = form.save(commit=False) #создаем или изменяем комент
+        comment.author = request.user # устанавливаем автора
+        comment.post = post # устанавливаем связь с постом.
+        comment.save() # сохраняем в базу.
+        return redirect('blog:post_detail', id=id) 
+
+    return render(request, 'blog/comment.html', context)
+
+
+def delete_comment(request, id, pk):
+    post = get_object_or_404(Post, id=id)
+    comment = get_object_or_404(Comment, id=pk)
+    form = CommentForm(instance=comment)
+    context = {'post': post, 'form': form, 'comment': comment}
+    # Форму с переданным в неё объектом request.GET 
+    # записываем в словарь контекста...
+    if request.method == 'POST':
+        # ...удаляем объект:
+        comment.delete()
+    # ...и отправляем в шаблон.
+    return render(request, 'blog/comment.html', context)
