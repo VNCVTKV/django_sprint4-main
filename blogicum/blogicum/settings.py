@@ -154,3 +154,5 @@ INTERNAL_IPS = [
 CSRF_FAILURE_VIEW = 'core.views.csrf_failure' 
 
 LOGIN_REDIRECT_URL = 'blog:index' 
+
+MEDIA_ROOT = BASE_DIR / 'media'

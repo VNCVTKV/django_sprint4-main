@@ -4,6 +4,8 @@ from django import forms
 from .models import Post, Comment
 
 from django.contrib.auth import get_user_model
+from django.utils import timezone  # Для работы с часовыми поясами
+import datetime
 
 User = get_user_model()
 
@@ -17,7 +19,9 @@ class PostForm(forms.ModelForm):
         # Указываем модель, на основе которой должна строиться форма.
         model = Post
         # Указываем, что надо отобразить все поля.
-        fields = '__all__' 
+        exclude = ['author',]
+        
+
 
 
 class CommentForm(forms.ModelForm):

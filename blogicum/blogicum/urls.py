@@ -18,6 +18,7 @@ from django.urls import include, path, reverse_lazy
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.views.generic.edit import CreateView
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', include('blog.urls', namespace='blog')),
@@ -33,7 +34,7 @@ urlpatterns = [
         ),
         name='registration',
     ),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
 
 # Если проект запущен в режиме разработки...
 if settings.DEBUG:

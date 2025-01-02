@@ -2,6 +2,9 @@ from django.db import models
 
 from core.models import BaseModel
 from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.db.models import Count
+
 
 User = get_user_model()
 
@@ -64,6 +67,10 @@ class Post(BaseModel):
         null=True,
         verbose_name='Категория'
     )
+    
+    image = models.ImageField(blank=True,
+                              upload_to='post_image',
+                              verbose_name='Изображение')
 
     class Meta:
         verbose_name = 'публикация'
@@ -71,6 +78,13 @@ class Post(BaseModel):
 
     def __str__(self):
         return self.title 
+    
+    @classmethod
+    def with_comments_count(cls, queryset=None):
+       """Вычисляет количество комментов для каждого поста и добавляет это как поле `comments_count`."""
+       if queryset is None:
+          queryset = cls.objects.all()
+       return queryset.annotate(comment_count = Count('comments'))
 
 
 class Comment(BaseModel):
