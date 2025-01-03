@@ -151,8 +151,14 @@ INTERNAL_IPS = [
     '127.0.0.1',
 ] 
 
-CSRF_FAILURE_VIEW = 'core.views.csrf_failure' 
+CSRF_FAILURE_VIEW = 'pages.views.csrf_failure' 
 
 LOGIN_REDIRECT_URL = 'blog:index' 
 
 MEDIA_ROOT = BASE_DIR / 'media'
+
+LOGIN_URL = 'login' 
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# Указываем директорию, в которую будут сохраняться файлы писем:
+EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'

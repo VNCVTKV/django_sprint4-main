@@ -20,6 +20,9 @@ from django.contrib.auth.forms import UserCreationForm
 from django.views.generic.edit import CreateView
 from django.conf.urls.static import static
 
+handler404 = 'pages.views.page_not_found'
+handler500 = 'pages.views.server_error'
+
 urlpatterns = [
     path('', include('blog.urls', namespace='blog')),
     path('pages/', include('pages.urls', namespace='pages')),
@@ -42,5 +45,3 @@ if settings.DEBUG:
     # Добавить к списку urlpatterns список адресов из приложения debug_toolbar:
     urlpatterns += (path('__debug__/', include(debug_toolbar.urls)),) 
 
-handler404 = 'core.views.page_not_found'
-handler500 = 'core.views.server_error'

@@ -46,7 +46,7 @@ def category_posts(request, category_slug):
 
 
 def post_detail(request, id):
-    post = get_object_or_404(get_posts(), id=id)
+    post = get_object_or_404(get_posts() | request.user.posts.all(), id=id)
     form = CommentForm(request.POST or None)
     queryset = Comment.objects.filter(post=id)
     context = {'post': post, 'form': form, 'comments': queryset}
@@ -60,43 +60,82 @@ def post_detail(request, id):
                   'blog/detail.html', context)
 
 
+# @login_required
+# def create_post(request, pk=None):
+#        if pk is not None:
+#            instance = get_object_or_404(Post, id=pk)
+#            if request.user != instance.author:
+#       #         return redirect('blog:post_detail', id=pk)
+#        else:
+#            # Связывать форму с объектом не нужно, установим значение None.
+#            instance = None
+#        form = PostForm(request.POST or None, files=request.FILES or None, instance=instance)
+#        context = {'form': form}
+#         Форму с переданным в неё объектом request.GET 
+#         записываем в словарь контекста...
+#        if form.is_valid():
+#            post = form.save(commit=False)
+#            post.author = request.user
+#            post.save()
+#            return redirect('blog:post_detail', id=post.id) 
+#         ...и отправляем в шаблон.
+#         return render(request, 'blog/create.html', context)
+
 @login_required
-def create_post(request, pk=None):
-    if pk is not None:
-        instance = get_object_or_404(Post, id=pk)
-        if request.user != instance.author:
-            return redirect('blog:post_detail', id=pk)
-    else:
-        # Связывать форму с объектом не нужно, установим значение None.
-        instance = None
-    form = PostForm(request.POST or None, files=request.FILES or None, instance=instance)
-    context = {'form': form}
-    # Форму с переданным в неё объектом request.GET 
-    # записываем в словарь контекста...
+def create_post(request):
+    template = 'blog/create.html'
+    form = PostForm(request.POST or None, files=request.FILES or None)
     if form.is_valid():
         post = form.save(commit=False)
         post.author = request.user
         post.save()
-        return redirect('blog:post_detail', id=post.id) 
-    # ...и отправляем в шаблон.
-    return render(request, 'blog/create.html', context)
+        return redirect('blog:profile', request.user)
+    context = {'form': form}
+    return render(request, template, context)
 
 
 @login_required
-def delete_post(request, pk):
-    instance = get_object_or_404(Post, id=pk)  
-    form = PostForm(instance=instance)
-    if request.user != instance.author:
-        return redirect('blog:post_detail', id=pk) 
+def edit_post(request, pk):
+    template = 'blog/create.html'
+    post = get_object_or_404(Post, id=pk)
+    if request.user != post.author:
+        return redirect('blog:post_detail', pk)
+    form = PostForm(
+        request.POST or None, files=request.FILES or None, instance=post)
+    if form.is_valid():
+        post.save()
+        return redirect('blog:post_detail', pk)
     context = {'form': form}
-    # Форму с переданным в неё объектом request.GET 
-    # записываем в словарь контекста...
+    return render(request, template, context)
+
+
+# @login_required
+# def delete_post(request, pk):
+#     instance = get_object_or_404(Post, id=pk)  
+#     form = PostForm(instance=instance)
+#     if request.user != instance.author:
+#         return redirect('blog:post_detail', id=pk) 
+#     context = {'form': form}
+#     # Форму с переданным в неё объектом request.GET 
+#     # записываем в словарь контекста...
+#     if request.method == 'POST':
+#         # ...удаляем объект:
+#         instance.delete()
+#         return redirect('blog:post_detail', id=pk)
+#     # ...и отправляем в шаблон.
+#     return render(request, 'blog/create.html', context)
+@login_required
+def delete_post(request, pk):
+    template = 'blog/create.html'
+    post = get_object_or_404(Post, id=pk)
+    if request.user != post.author:
+        return redirect('blog:post_detail', pk)
+    form = PostForm(request.POST or None, instance=post)
     if request.method == 'POST':
-        # ...удаляем объект:
-        instance.delete()
-        return redirect('blog:post_detail', id=pk)
-    # ...и отправляем в шаблон.
-    return render(request, 'blog/create.html', context)
+        post.delete()
+        return redirect('blog:index')
+    context = {'form': form}
+    return render(request, template, context)
 
 
 def profile(request, username):
@@ -118,6 +157,7 @@ def profile(request, username):
     return render(request, 'blog/profile.html', context)
 
 
+@login_required
 def edit_profile(request):
     user = get_object_or_404(User, pk=request.user.id)
 
@@ -160,8 +200,7 @@ def delete_comment(request, id, pk):
     comment = get_object_or_404(Comment, id=pk)
     if request.user != comment.author:
         return redirect('blog:post_detail', id=id) 
-    form = CommentForm(instance=comment)
-    context = {'post': post, 'form': form, 'comment': comment}
+    context = {'post': post, 'comment': comment}
     # Форму с переданным в неё объектом request.GET 
     # записываем в словарь контекста...
     if request.method == 'POST':
